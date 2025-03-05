@@ -1,0 +1,28 @@
+button.active-button {
+  background-color: blue !important;
+  color: white !important;
+}
+
+button.inactive-button {
+  background-color: white !important;
+  color: black !important;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; /* Full screen height */
+  text-align: center;
+}
+
+button, select {
+  margin: 10px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
