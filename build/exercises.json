@@ -1,0 +1,40 @@
+[
+    {
+      "text": "Single Stroke Roll",
+      "image": "/images/single_stroke.png",
+      "category": "Fluidity",
+      "difficulty": "Easy"
+    },
+    {
+      "text": "Paradiddle",
+      "image": "/images/paradiddle.png",
+      "category": "Independence",
+      "difficulty": "Medium"
+    },
+    {
+      "text": "Jazz Ride Pattern",
+      "image": "/images/jazz_ride.png",
+      "category": "Vocabulary",
+      "difficulty": "Hard"
+    },
+    {
+      "text": "Quarter Notes on Hi-Hat",
+      "image": "/images/quarter_hihat.png",
+      "category": "Time",
+      "difficulty": "Easy"
+    },
+    {
+      "text": "Double Paradiddles over Songo Kick",
+      "image": "/images/double_paradiddles_over_songo_kick.png",
+      "category": "Fluidity",
+      "difficulty": "Medium"
+    },
+    {"text": "RLL","image":"","category":"Fluidity","difficulty":"Medium"},
+    {"text": "RLL-RLL-RLRR","image":"", "category":"Fluidity","difficulty":"Medium"},
+    {"text": "RLL-RLRR","image": "", "category":"Fluidity","difficulty":"Medium"},
+    {"text": "Triple Paradiddle","image": "", "category":"Fluidity","difficulty":"Medium"},
+    {"text": "Double Paradiddle","image": "", "category":"Fluidity","difficulty":"Medium"},
+    {"text": "Inverted Doubles","image": "", "category":"Fluidity","difficulty":"Medium"},
+    {"text": "Doubles","image": "", "category":"Fluidity","difficulty":"Easy"},
+    {"text": "Inverted Paradiddles","image": "", "category":"Fluidity","difficulty":"Medium"}
+  ]

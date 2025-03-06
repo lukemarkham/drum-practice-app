@@ -13,19 +13,31 @@ const DrumPracticeApp = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [timerRunning, setTimerRunning] = useState(false);
-  const metronome = new Tone.MembraneSynth().toDestination();  // Fetch exercises from JSON file
+  const metronome = new Tone.NoiseSynth({
+    noise: {
+      type: "white", // White noise mimics a shaker
+    },
+    envelope: {
+      attack: 0.001, // Fast attack
+      decay: 0.1, // Short decay for a crisp sound
+      sustain: 0,
+    },
+  }).toDestination();
   const [selectedTime, setSelectedTime] = useState(5 * 60); // Default to 5 minutes
   const toggleMetronome = async () => {
     if (!isPlaying) {
-      await Tone.start(); // Ensures the audio context is running
-      Tone.Transport.bpm.value = bpm; // Set BPM
+      await Tone.start();
+      Tone.Transport.bpm.value = bpm;
+  
       Tone.Transport.scheduleRepeat((time) => {
-        metronome.triggerAttackRelease("C2", "8n", time);
-      }, "4n"); // Repeat every quarter note
+        metronome.triggerAttackRelease("8n", time); // Uses 8th note duration for a crisp sound
+      }, "4n");
+  
       Tone.Transport.start();
     } else {
       Tone.Transport.stop();
     }
+  
     setIsPlaying(!isPlaying);
   };
 
@@ -48,6 +60,12 @@ const DrumPracticeApp = () => {
       .catch((error) => console.error("Error loading exercises:", error));
   }, []);
 
+  useEffect(() => {
+    if (isPlaying) {
+      Tone.Transport.bpm.value = bpm; // ✅ Updates BPM while playing
+    }
+  }, [bpm, isPlaying]);
+
   const getRandomExercise = () => {
     const filteredExercises = exercises.filter(
       (ex) =>
@@ -57,12 +75,16 @@ const DrumPracticeApp = () => {
   
     if (filteredExercises.length > 0) {
       setCurrentExercise(filteredExercises[Math.floor(Math.random() * filteredExercises.length)]);
-      setBPM(Math.floor(Math.random() * (160 - 60 + 1)) + 60); // Random BPM
-      setTimeLeft(selectedTime); //Refernces time selected in Timer dropdown selector
-      setTimerRunning(true); // Start the timer
-      toggleMetronome(); // ✅ Start the metronome when "Start Practice" is clicked
+      setBPM(Math.floor(Math.random() * (140 - 80 + 1)) + 80); // ✅ Update BPM only
+      setTimeLeft(selectedTime); // ✅ Reset Timer
+      setTimerRunning(true); // ✅ Keep timer running
+  
+      // ✅ Only start metronome if it’s not already playing
+      if (!isPlaying) {
+        toggleMetronome();
+      }
     } else {
-      setCurrentExercise(null); // If no exercises match, clear the display
+      setCurrentExercise(null);
     }
   };
 
@@ -117,7 +139,7 @@ const DrumPracticeApp = () => {
       <div>
         <h2>Metronome</h2>
         <p>BPM: {bpm}</p>
-        <Slider value={bpm} min={60} max={160} onChange={setBPM} />
+        <Slider value={bpm} min={80} max={150} onChange={setBPM} />
         <Button onClick={toggleMetronome}>
   {isPlaying ? "Stop Metronome" : "Start Metronome"}
 </Button>
