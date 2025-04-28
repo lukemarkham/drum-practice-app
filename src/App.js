@@ -107,6 +107,9 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
 
   return (
     <div className="app-container">
+      <div style={{ textAlign: "center", paddingTop: "20px" }}>
+        <img src="/images/frog-drummer.png" alt="Frog Drummer" className="bouncing-frog" style={{ width: "200px" }} />
+      </div>
       <h1 className="text-2xl font-bold">Drum Practice App</h1>
 
       <div>
