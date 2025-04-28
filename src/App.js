@@ -5,6 +5,9 @@ import * as Tone from "tone";
 
 
 const DrumPracticeApp = () => {
+  const [selectedPracticeTime, setSelectedPracticeTime] = useState(900); // Default to 15 minutes
+const [practiceTimeLeft, setPracticeTimeLeft] = useState(900);
+const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
   const [exercises, setExercises] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("Fluidity");
   const [selectedDifficulty, setSelectedDifficulty] = useState("Easy");
@@ -41,6 +44,20 @@ const DrumPracticeApp = () => {
     setIsPlaying(!isPlaying);
   };
 
+//Overall timer useEffect below
+  useEffect(() => {
+    if (practiceTimerRunning && practiceTimeLeft > 0) {
+      const practiceTimer = setInterval(() => {
+        setPracticeTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+  
+      return () => clearInterval(practiceTimer);
+    } else if (practiceTimeLeft === 0) {
+      stopPracticeSession(); // ✅ Stop everything when the practice timer ends
+    }
+  }, [practiceTimerRunning, practiceTimeLeft]);
+
+//Interval Timer use Effect below
   useEffect(() => {
     if (timerRunning && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -116,6 +133,14 @@ const DrumPracticeApp = () => {
   <h2>Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</h2>
 </div>
 <div>
+<div>
+  <label>Select Total Practice Time: </label>
+  <select value={selectedPracticeTime} onChange={(e) => setSelectedPracticeTime(Number(e.target.value))}>
+    <option value={300}>5 minutes</option>
+    <option value={900}>15 minutes</option>
+    <option value={1800}>30 minutes</option>
+  </select>
+</div>
   <label>Select Time Interval: </label>
   <select value={selectedTime} onChange={(e) => setSelectedTime(Number(e.target.value))}>
     {[...Array(10).keys()].map((i) => (

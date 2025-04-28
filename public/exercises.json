@@ -36,5 +36,6 @@
     {"text": "Double Paradiddle","image": "", "category":"Fluidity","difficulty":"Medium"},
     {"text": "Inverted Doubles","image": "", "category":"Fluidity","difficulty":"Medium"},
     {"text": "Doubles","image": "", "category":"Fluidity","difficulty":"Easy"},
-    {"text": "Inverted Paradiddles","image": "", "category":"Fluidity","difficulty":"Medium"}
+    {"text": "Inverted Paradiddles","image": "/images/Inverted Paradidle.png", "category":"Fluidity","difficulty":"Medium"}
+    {"text": "Double-Single Paradiddle","image": "/images/Double-Single-Para.png", "category":"Fluidity","difficulty":"Medium"}
   ]
