@@ -26,3 +26,21 @@ button, select {
 h1 {
   margin-bottom: 20px;
 }
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.bouncing-frog {
+  animation: bounce 2s infinite ease-in-out;
+  transition: transform 0.3s ease;
+}
+
+.bouncing-frog:hover {
+  transform: translateY(-20px);
+}
