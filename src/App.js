@@ -34,16 +34,10 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     if (!isPlaying) {
       await Tone.start();
       Tone.Transport.bpm.value = bpm;
-  
-      Tone.Transport.scheduleRepeat((time) => {
-        metronome.triggerAttackRelease("8n", time); // Uses 8th note duration for a crisp sound
-      }, "4n");
-  
       Tone.Transport.start();
     } else {
       Tone.Transport.stop();
     }
-  
     setIsPlaying(!isPlaying);
   };
 
@@ -61,9 +55,12 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
       setTimeLeft(selectedTime); // ✅ Reset Timer
       setTimerRunning(true); // ✅ Keep timer running
 
-      // ✅ Only start metronome if it’s not already playing
+      // ✅ Start metronome every time a new exercise begins
       if (!isPlaying) {
-        await toggleMetronome();
+        await Tone.start();
+        Tone.Transport.bpm.value = bpm;
+        Tone.Transport.start();
+        setIsPlaying(true);
       }
     } else {
       setCurrentExercise(null);
@@ -210,3 +207,8 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
 };
 
 export default DrumPracticeApp;
+  useEffect(() => {
+    Tone.Transport.scheduleRepeat((time) => {
+      metronome.triggerAttackRelease("8n", time); // Uses 8th note duration for a crisp sound
+    }, "4n");
+  }, []);
