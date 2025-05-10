@@ -16,6 +16,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [timerRunning, setTimerRunning] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const metronome = new Tone.NoiseSynth({
     noise: {
       type: "white", // White noise mimics a shaker
@@ -27,6 +28,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     },
   }).toDestination();
   const chimeSynth = new Tone.Synth().toDestination();
+  const beepSynth = new Tone.Synth().toDestination();
   const [selectedTime, setSelectedTime] = useState(5 * 60); // Default to 5 minutes
   const toggleMetronome = async () => {
     if (!isPlaying) {
@@ -43,6 +45,29 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     }
   
     setIsPlaying(!isPlaying);
+  };
+
+  // Move main exercise selection logic here for countdown usage
+  const proceedWithExercise = async () => {
+    const filteredExercises = exercises.filter(
+      (ex) =>
+        ex.category === selectedCategory &&
+        (selectedDifficulty === "Any" || ex.difficulty === selectedDifficulty)
+    );
+
+    if (filteredExercises.length > 0) {
+      setCurrentExercise(filteredExercises[Math.floor(Math.random() * filteredExercises.length)]);
+      setBPM(Math.floor(Math.random() * (140 - 80 + 1)) + 80); // ✅ Update BPM only
+      setTimeLeft(selectedTime); // ✅ Reset Timer
+      setTimerRunning(true); // ✅ Keep timer running
+
+      // ✅ Only start metronome if it’s not already playing
+      if (!isPlaying) {
+        await toggleMetronome();
+      }
+    } else {
+      setCurrentExercise(null);
+    }
   };
 
 //Overall timer useEffect below
@@ -87,32 +112,34 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
 
   const getRandomExercise = async () => {
     await Tone.start(); // Ensure audio context is started
-    chimeSynth.triggerAttackRelease("C6", "8n"); // Play chime before switching
-    const filteredExercises = exercises.filter(
-      (ex) =>
-        ex.category === selectedCategory &&
-        (selectedDifficulty === "Any" || ex.difficulty === selectedDifficulty)
-    );
-  
-    if (filteredExercises.length > 0) {
-      setCurrentExercise(filteredExercises[Math.floor(Math.random() * filteredExercises.length)]);
-      setBPM(Math.floor(Math.random() * (140 - 80 + 1)) + 80); // ✅ Update BPM only
-      setTimeLeft(selectedTime); // ✅ Reset Timer
-      setTimerRunning(true); // ✅ Keep timer running
-  
-      // ✅ Only start metronome if it’s not already playing
-      if (!isPlaying) {
-        toggleMetronome();
+    chimeSynth.triggerAttackRelease("C6", "8n"); // Chime before countdown
+
+    setCountdown(3);
+    setCurrentExercise({ text: "Get Ready...", image: "/images/frog-drummer.png" });
+
+    let countdownValue = 3;
+    const intervalMs = (60 / bpm) * 1000;
+
+    const countdownInterval = setInterval(() => {
+      countdownValue -= 1;
+      setCountdown(countdownValue);
+      beepSynth.triggerAttackRelease("G5", "8n");
+
+      if (countdownValue === 0) {
+        clearInterval(countdownInterval);
+        beepSynth.triggerAttackRelease("C5", "2n"); // Long tone to start
+        proceedWithExercise();
       }
-    } else {
-      setCurrentExercise(null);
-    }
+    }, intervalMs);
   };
 
   return (
     <div className="app-container">
       <div style={{ textAlign: "center", paddingTop: "20px" }}>
         <img src="/images/frog-drummer.png" alt="Frog Drummer" className="bouncing-frog" style={{ width: "200px" }} />
+        {countdown > 0 && countdown < 3 && (
+          <h2 className="text-xl font-bold">Starting in {countdown}...</h2>
+        )}
       </div>
       <h1 className="text-2xl font-bold">Drum Practice App</h1>
 
