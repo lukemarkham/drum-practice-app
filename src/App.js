@@ -34,10 +34,16 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     if (!isPlaying) {
       await Tone.start();
       Tone.Transport.bpm.value = bpm;
+  
+      Tone.Transport.scheduleRepeat((time) => {
+        metronome.triggerAttackRelease("8n", time); // Uses 8th note duration for a crisp sound
+      }, "4n");
+  
       Tone.Transport.start();
     } else {
       Tone.Transport.stop();
     }
+  
     setIsPlaying(!isPlaying);
   };
 
@@ -55,12 +61,9 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
       setTimeLeft(selectedTime); // ✅ Reset Timer
       setTimerRunning(true); // ✅ Keep timer running
 
-      // ✅ Start metronome every time a new exercise begins
+      // ✅ Only start metronome if it’s not already playing
       if (!isPlaying) {
-        await Tone.start();
-        Tone.Transport.bpm.value = bpm;
-        Tone.Transport.start();
-        setIsPlaying(true);
+        await toggleMetronome();
       }
     } else {
       setCurrentExercise(null);
@@ -86,13 +89,11 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
       const timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000); // Decrease by 1 second
-
+  
       return () => clearInterval(timer); // Cleanup interval when component updates
     } else if (timeLeft === 0) {
-      (async () => {
-        setTimerRunning(false); // Stop the current interval
-        await getRandomExercise(); // Start a new exercise with countdown and metronome
-      })();
+      setTimerRunning(false); // Stop the current interval
+      getRandomExercise();    // Then start a new one via getRandomExercise
     }
   }, [timerRunning, timeLeft]);
 
@@ -113,13 +114,13 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     await Tone.start(); // Ensure audio context is started
     chimeSynth.triggerAttackRelease("C6", "8n"); // Chime before countdown
 
-    setCountdown(4);
+    setCountdown(3);
     setCurrentExercise({ text: "Get Ready...", image: "/images/frog-drummer.png" });
 
-    let countdownValue = 4;
+    let countdownValue = 3;
     const intervalMs = (60 / bpm) * 1000;
 
-    const countdownInterval = setInterval(async () => {
+    const countdownInterval = setInterval(() => {
       countdownValue -= 1;
       setCountdown(countdownValue);
       beepSynth.triggerAttackRelease("G5", "8n");
@@ -127,7 +128,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
       if (countdownValue === 0) {
         clearInterval(countdownInterval);
         beepSynth.triggerAttackRelease("C5", "2n"); // Long tone to start
-        await proceedWithExercise();
+        proceedWithExercise();
       }
     }, intervalMs);
   };
@@ -136,7 +137,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     <div className="app-container">
       <div style={{ textAlign: "center", paddingTop: "20px" }}>
         <img src="/images/frog-drummer.png" alt="Frog Drummer" className="bouncing-frog" style={{ width: "200px" }} />
-        {countdown > 0 && countdown < 5 && (
+        {countdown > 0 && countdown < 3 && (
           <h2 className="text-xl font-bold">Starting in {countdown}...</h2>
         )}
       </div>
@@ -207,8 +208,3 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
 };
 
 export default DrumPracticeApp;
-  useEffect(() => {
-    Tone.Transport.scheduleRepeat((time) => {
-      metronome.triggerAttackRelease("8n", time); // Uses 8th note duration for a crisp sound
-    }, "4n");
-  }, []);
