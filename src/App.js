@@ -1,210 +1,177 @@
-import "./App.css";
-import React, { useState, useEffect } from "react";
-import { Button, Slider, Card, CardContent } from "./components/ui";
-import * as Tone from "tone";
+import React, { useState, useEffect, useRef } from 'react';
+import * as Tone from 'tone';
 
+const exercises = {
+  scales: {
+    easy: ['C Major', 'G Major', 'D Major', 'A Minor'],
+    medium: ['E Major', 'B Major', 'F# Minor', 'C# Minor'],
+    hard: ['F Major', 'Bb Major', 'Eb Major', 'Ab Minor'],
+  },
+  arpeggios: {
+    easy: ['C Major Arpeggio', 'G Major Arpeggio'],
+    medium: ['D Major Arpeggio', 'A Minor Arpeggio'],
+    hard: ['E Major Arpeggio', 'B Minor Arpeggio'],
+  },
+  chords: {
+    easy: ['C Major Chord', 'G Major Chord'],
+    medium: ['D7 Chord', 'A7 Chord'],
+    hard: ['Fmaj7 Chord', 'Bm7b5 Chord'],
+  },
+};
 
-const DrumPracticeApp = () => {
-  const [selectedPracticeTime, setSelectedPracticeTime] = useState(900); // Default to 15 minutes
-const [practiceTimeLeft, setPracticeTimeLeft] = useState(900);
-const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
-  const [exercises, setExercises] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("Fluidity");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("Any");
-  const [currentExercise, setCurrentExercise] = useState(null);
-  const [bpm, setBPM] = useState(Math.floor(Math.random() * (160 - 60 + 1)) + 60);
+const categories = Object.keys(exercises);
+const difficulties = ['easy', 'medium', 'hard'];
+
+function App() {
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const [selectedDifficulty, setSelectedDifficulty] = useState(difficulties[0]);
+  const [currentExercise, setCurrentExercise] = useState('');
+  const [bpm, setBpm] = useState(60);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [timerRunning, setTimerRunning] = useState(false);
-  const [countdown, setCountdown] = useState(3);
-  const metronome = new Tone.NoiseSynth({
-    noise: {
-      type: "white", // White noise mimics a shaker
-    },
-    envelope: {
-      attack: 0.001, // Fast attack
-      decay: 0.1, // Short decay for a crisp sound
-      sustain: 0,
-    },
-  }).toDestination();
-  const chimeSynth = new Tone.Synth().toDestination();
-  const beepSynth = new Tone.Synth().toDestination();
-  const [selectedTime, setSelectedTime] = useState(5 * 60); // Default to 5 minutes
-  const toggleMetronome = async () => {
-    if (!isPlaying) {
-      await Tone.start();
-      Tone.Transport.bpm.value = bpm;
-  
-      Tone.Transport.scheduleRepeat((time) => {
-        metronome.triggerAttackRelease("8n", time); // Uses 8th note duration for a crisp sound
-      }, "4n");
-  
-      Tone.Transport.start();
-    } else {
+  const [countdown, setCountdown] = useState(null);
+
+  const metronomeRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
+
+  useEffect(() => {
+    // Initialize metronome with Tone.js
+    const synth = new Tone.MembraneSynth().toDestination();
+    const loop = new Tone.Loop((time) => {
+      synth.triggerAttackRelease('C2', '8n', time);
+    }, '4n');
+    metronomeRef.current = { synth, loop };
+    Tone.Transport.bpm.value = bpm;
+
+    return () => {
       Tone.Transport.stop();
-    }
-  
-    setIsPlaying(!isPlaying);
-  };
-
-  // Move main exercise selection logic here for countdown usage
-  const proceedWithExercise = async () => {
-    const filteredExercises = exercises.filter(
-      (ex) =>
-        ex.category === selectedCategory &&
-        (selectedDifficulty === "Any" || ex.difficulty === selectedDifficulty)
-    );
-
-    if (filteredExercises.length > 0) {
-      setCurrentExercise(filteredExercises[Math.floor(Math.random() * filteredExercises.length)]);
-      setBPM(Math.floor(Math.random() * (140 - 80 + 1)) + 80); // ✅ Update BPM only
-      setTimeLeft(selectedTime); // ✅ Reset Timer
-      setTimerRunning(true); // ✅ Keep timer running
-
-      // ✅ Only start metronome if it’s not already playing
-      if (!isPlaying) {
-        await toggleMetronome();
-      }
-    } else {
-      setCurrentExercise(null);
-    }
-  };
-
-//Overall timer useEffect below
-  useEffect(() => {
-    if (practiceTimerRunning && practiceTimeLeft > 0) {
-      const practiceTimer = setInterval(() => {
-        setPracticeTimeLeft((prevTime) => prevTime - 1);
-      }, 1000);
-  
-      return () => clearInterval(practiceTimer);
-    } else if (practiceTimeLeft === 0) {
-      stopPracticeSession(); // ✅ Stop everything when the practice timer ends
-    }
-  }, [practiceTimerRunning, practiceTimeLeft]);
-
-//Interval Timer use Effect below
-  useEffect(() => {
-    if (timerRunning && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft((prevTime) => prevTime - 1);
-      }, 1000); // Decrease by 1 second
-  
-      return () => clearInterval(timer); // Cleanup interval when component updates
-    } else if (timeLeft === 0) {
-      setTimerRunning(false); // Stop the current interval
-      getRandomExercise();    // Then start a new one via getRandomExercise
-    }
-  }, [timerRunning, timeLeft]);
-
-  useEffect(() => {
-    fetch("/exercises.json")
-      .then((response) => response.json())
-      .then((data) => setExercises(data))
-      .catch((error) => console.error("Error loading exercises:", error));
+      loop.stop();
+      metronomeRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
-    if (isPlaying) {
-      Tone.Transport.bpm.value = bpm; // ✅ Updates BPM while playing
+    if (metronomeRef.current) {
+      Tone.Transport.bpm.rampTo(bpm, 0.1);
     }
-  }, [bpm, isPlaying]);
+  }, [bpm]);
 
-  const getRandomExercise = async () => {
-    await Tone.start(); // Ensure audio context is started
-    chimeSynth.triggerAttackRelease("C6", "8n"); // Chime before countdown
+  useEffect(() => {
+    if (timerRunning) {
+      // Start timer logic here if needed
+    } else {
+      // Stop timer logic here if needed
+    }
+  }, [timerRunning]);
 
+  function toggleMetronome() {
+    if (!isPlaying) {
+      Tone.start().then(() => {
+        metronomeRef.current.loop.start(0);
+        Tone.Transport.start();
+        setIsPlaying(true);
+      });
+    } else {
+      metronomeRef.current.loop.stop();
+      Tone.Transport.stop();
+      setIsPlaying(false);
+    }
+  }
+
+  function getRandomExercise(category, difficulty) {
+    const list = exercises[category][difficulty];
+    const randomIndex = Math.floor(Math.random() * list.length);
+    return list[randomIndex];
+  }
+
+  function proceedWithExercise() {
+    const exercise = getRandomExercise(selectedCategory, selectedDifficulty);
+    setCurrentExercise(exercise);
+    setTimerRunning(true);
+  }
+
+  function getCountdownThenStartExercise() {
     setCountdown(3);
-    setCurrentExercise({ text: "Get Ready...", image: "/images/frog-drummer.png" });
-
-    let countdownValue = 3;
-    const intervalMs = (60 / bpm) * 1000;
-
-    const countdownInterval = setInterval(() => {
-      countdownValue -= 1;
-      setCountdown(countdownValue);
-      beepSynth.triggerAttackRelease("G5", "8n");
-
-      if (countdownValue === 0) {
-        clearInterval(countdownInterval);
-        beepSynth.triggerAttackRelease("C5", "2n"); // Long tone to start
-        proceedWithExercise();
-      }
-    }, intervalMs);
-  };
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === 1) {
+          clearInterval(countdownIntervalRef.current);
+          setCountdown(null);
+          proceedWithExercise();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
 
   return (
     <div className="app-container">
-      <div style={{ textAlign: "center", paddingTop: "20px" }}>
-        <img src="/images/frog-drummer.png" alt="Frog Drummer" className="bouncing-frog" style={{ width: "200px" }} />
-        {countdown > 0 && countdown < 3 && (
-          <h2 className="text-xl font-bold">Starting in {countdown}...</h2>
-        )}
+      <h1>Drum Practice App</h1>
+      <div className="selectors">
+        <label>
+          Category:
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Difficulty:
+          <select
+            value={selectedDifficulty}
+            onChange={(e) => setSelectedDifficulty(e.target.value)}
+          >
+            {difficulties.map((diff) => (
+              <option key={diff} value={diff}>
+                {diff.charAt(0).toUpperCase() + diff.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
-      <h1 className="text-2xl font-bold">Drum Practice App</h1>
 
-      <div>
-  <label>Select Category:</label>
-  <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
-    <option value="Fluidity">Fluidity</option>
-    <option value="Independence">Independence</option>
-    <option value="Vocabulary">Vocabulary</option>
-    <option value="Time">Time</option>
-  </select>
-</div>
+      <button onClick={getCountdownThenStartExercise} disabled={timerRunning || countdown !== null}>
+        Start Exercise
+      </button>
 
-      <div>
-        <label>Difficulty:</label>
-        <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)}>
-          <option value="Any">Any</option>
-          <option value="Easy">Easy</option>
-          <option value="Medium">Medium</option>
-          <option value="Hard">Hard</option>
-        </select>
-      </div>
-
-      <div>
-  <h2>Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</h2>
-</div>
-<div>
-<div>
-  <label>Select Total Practice Time: </label>
-  <select value={selectedPracticeTime} onChange={(e) => setSelectedPracticeTime(Number(e.target.value))}>
-    <option value={300}>5 minutes</option>
-    <option value={900}>15 minutes</option>
-    <option value={1800}>30 minutes</option>
-  </select>
-</div>
-  <label>Select Time Interval: </label>
-  <select value={selectedTime} onChange={(e) => setSelectedTime(Number(e.target.value))}>
-    {[...Array(10).keys()].map((i) => (
-      <option key={i + 1} value={(i + 1) * 60}>
-        {i + 1} minute{i > 0 ? "s" : ""}
-      </option>
-    ))}
-  </select>
-</div>
-      <Button onClick={() => getRandomExercise()}>Start Practice</Button>
-
-      {currentExercise && (
-        <Card>
-          <CardContent>
-            <h2 className="text-lg font-bold">{currentExercise.text}</h2>
-            <img src={currentExercise.image} alt={currentExercise.text} className="mx-auto" />
-          </CardContent>
-        </Card>
+      {countdown !== null && (
+        <div className="countdown-overlay">
+          <h2>{countdown}</h2>
+        </div>
       )}
 
-      <div>
-        <h2>Metronome</h2>
-        <p>BPM: {bpm}</p>
-        <Slider value={bpm} min={80} max={150} onChange={setBPM} />
-        <Button onClick={toggleMetronome}>
-  {isPlaying ? "Stop Metronome" : "Start Metronome"}
-</Button>
+      <div className="frog-container">
+        <img src="frog.png" alt="Frog" />
+      </div>
+
+      <div className="current-exercise">
+        <h2>Current Exercise:</h2>
+        <p>{currentExercise || 'None'}</p>
+      </div>
+
+      <div className="metronome-controls">
+        <label>
+          BPM: {bpm}
+          <input
+            type="range"
+            min="40"
+            max="200"
+            value={bpm}
+            onChange={(e) => setBpm(Number(e.target.value))}
+          />
+        </label>
+        <button onClick={toggleMetronome}>{isPlaying ? 'Stop Metronome' : 'Start Metronome'}</button>
       </div>
     </div>
   );
-};
+}
 
-export default DrumPracticeApp;
+export default App;

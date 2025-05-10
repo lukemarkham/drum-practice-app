@@ -44,3 +44,13 @@ h1 {
 .bouncing-frog:hover {
   transform: translateY(-20px);
 }
+
+@keyframes flash {
+  0% { opacity: 1; }
+  50% { opacity: 0.1; }
+  100% { opacity: 1; }
+}
+
+.flashing {
+  animation: flash 1s infinite;
+}
