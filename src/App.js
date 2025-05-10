@@ -89,11 +89,13 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
       const timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000); // Decrease by 1 second
-  
+
       return () => clearInterval(timer); // Cleanup interval when component updates
     } else if (timeLeft === 0) {
-      setTimerRunning(false); // Stop the current interval
-      getRandomExercise();    // Then start a new one via getRandomExercise
+      (async () => {
+        setTimerRunning(false); // Stop the current interval
+        await getRandomExercise(); // Start a new exercise with countdown and metronome
+      })();
     }
   }, [timerRunning, timeLeft]);
 
@@ -114,13 +116,13 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     await Tone.start(); // Ensure audio context is started
     chimeSynth.triggerAttackRelease("C6", "8n"); // Chime before countdown
 
-    setCountdown(3);
+    setCountdown(4);
     setCurrentExercise({ text: "Get Ready...", image: "/images/frog-drummer.png" });
 
-    let countdownValue = 3;
+    let countdownValue = 4;
     const intervalMs = (60 / bpm) * 1000;
 
-    const countdownInterval = setInterval(() => {
+    const countdownInterval = setInterval(async () => {
       countdownValue -= 1;
       setCountdown(countdownValue);
       beepSynth.triggerAttackRelease("G5", "8n");
@@ -128,7 +130,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
       if (countdownValue === 0) {
         clearInterval(countdownInterval);
         beepSynth.triggerAttackRelease("C5", "2n"); // Long tone to start
-        proceedWithExercise();
+        await proceedWithExercise();
       }
     }, intervalMs);
   };
@@ -137,7 +139,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     <div className="app-container">
       <div style={{ textAlign: "center", paddingTop: "20px" }}>
         <img src="/images/frog-drummer.png" alt="Frog Drummer" className="bouncing-frog" style={{ width: "200px" }} />
-        {countdown > 0 && countdown < 3 && (
+        {countdown > 0 && countdown < 5 && (
           <h2 className="text-xl font-bold">Starting in {countdown}...</h2>
         )}
       </div>
