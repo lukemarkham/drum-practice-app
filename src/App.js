@@ -10,7 +10,7 @@ const [practiceTimeLeft, setPracticeTimeLeft] = useState(900);
 const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
   const [exercises, setExercises] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("Fluidity");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("Easy");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("Any");
   const [currentExercise, setCurrentExercise] = useState(null);
   const [bpm, setBPM] = useState(Math.floor(Math.random() * (160 - 60 + 1)) + 60);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,6 +26,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
       sustain: 0,
     },
   }).toDestination();
+  const chimeSynth = new Tone.Synth().toDestination();
   const [selectedTime, setSelectedTime] = useState(5 * 60); // Default to 5 minutes
   const toggleMetronome = async () => {
     if (!isPlaying) {
@@ -66,7 +67,8 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
   
       return () => clearInterval(timer); // Cleanup interval when component updates
     } else if (timeLeft === 0) {
-      getRandomExercise(); // When timer reaches 0, select a new exercise
+      setTimerRunning(false); // Stop the current interval
+      getRandomExercise();    // Then start a new one via getRandomExercise
     }
   }, [timerRunning, timeLeft]);
 
@@ -83,7 +85,9 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     }
   }, [bpm, isPlaying]);
 
-  const getRandomExercise = () => {
+  const getRandomExercise = async () => {
+    await Tone.start(); // Ensure audio context is started
+    chimeSynth.triggerAttackRelease("C6", "8n"); // Play chime before switching
     const filteredExercises = exercises.filter(
       (ex) =>
         ex.category === selectedCategory &&
@@ -153,7 +157,7 @@ const [practiceTimerRunning, setPracticeTimerRunning] = useState(false);
     ))}
   </select>
 </div>
-      <Button onClick={getRandomExercise}>Start Practice</Button>
+      <Button onClick={() => getRandomExercise()}>Start Practice</Button>
 
       {currentExercise && (
         <Card>
